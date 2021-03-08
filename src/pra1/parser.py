@@ -1,4 +1,5 @@
 import os
+from typing import List, Any, Union
 from xml.dom.minidom import parse, parseString
 from ..tokenizer import tokenizer
 from eval import evaluator
@@ -7,7 +8,7 @@ from eval import evaluator
 class Utils(object):
     def __init__(self):
         self.tokenizer = tokenizer()
-        self.special_chars = "!@#$%^&*()-+?_=,<>/-[]"
+        self.special_chars = "!@#$%^&*()-+?_=,<>/-[]:"
 
     def ngrams_DrugBank(self, path):
         drugs_ngrams = []
@@ -21,6 +22,7 @@ class Utils(object):
                 text, type = line.strip().lower().split('|')
                 if type == 'drug':  # Solo miramos si es tipo drug
                     tokens = self.tokenizer.words_to_ngrams(text, 5, sep='')  # Extraemos ngramas de longitud 5 letras
+                    #tokens = tokens[len(tokens) - 1:]
                     for token in tokens:  # Para cada ngram
                         if ' ' not in token:  # No nos interesan los que contengan un espacio
                             if not any(c in self.special_chars for c in token):
@@ -40,12 +42,12 @@ class Utils(object):
 
             # Nos quedamos con los primeros
             print('Common ngrams:')
-            for indx in indx_max_ngrams[:200]:
+            for indx in indx_max_ngrams[:300]:
                 drugs_ngrams.append(ngrams_drugs[indx])
         return drugs_ngrams
 
     def ngrams_HSDB(self, path):
-        drugs_ngrams = []
+        drugs_ngrams: List[Union[Union[str, List[Union[str, Any]]], Any]] = []
         # Guardar los ngrams mas comunes que se corresponden a drugs
         with open(path, encoding="utf8") as f:
             lines = f.readlines()
@@ -55,6 +57,7 @@ class Utils(object):
 
                 text = line.strip().lower()
                 tokens = self.tokenizer.words_to_ngrams(text, 5, sep='')  # Extraemos ngramas de longitud 5 letras
+                tokens = tokens[len(tokens)-1:]
                 for token in tokens:  # Para cada ngram
                     if ' ' not in token:  # No nos interesan los que contengan un espacio
                         if token in ngrams_drugs:  # Si esta en la lista, sumamos al contador
@@ -73,10 +76,26 @@ class Utils(object):
 
             # Nos quedamos con los primeros
             print('Common ngrams:')
-            for indx in indx_max_ngrams[:200]:
+            for indx in indx_max_ngrams[:300]:
                 drugs_ngrams.append(ngrams_drugs[indx])
         return drugs_ngrams
+    def drug_suffix(self, path):
+        drugs_ngrams: List[Union[Union[str, List[Union[str, Any]]], Any]] = []
+        # Guardar los ngrams mas comunes que se corresponden a drugs
+        with open(path) as f:
+            lines = f.readlines()
+            ngrams_drugs = []
+            counts = []
+            for i, line in enumerate(lines):
 
+                text = line.strip().lower()
+                token = text
+                if ' ' not in token:
+                    if not any(c in self.special_chars for c in token):
+                        if len(token) > 4:
+                            drugs_ngrams.append(token)
+
+        return drugs_ngrams
 utils = Utils()
 
 
@@ -85,9 +104,11 @@ class Parser(object):
         self.path = path
         self.tokenizer = tokenizer()
         self.out_path = out_path
-        self.drugs = utils.ngrams_DrugBank('resources/DrugBank.txt')
-        self.drugs += utils.ngrams_HSDB('resources/HSDB.txt')
+        self.drugs = utils.ngrams_DrugBank('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\DrugBank.txt')
+        self.drugs += utils.ngrams_HSDB('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\HSDB.txt')
+        self.drugs += utils.drug_suffix('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\drugSuffix.txt')
         self.drugs = list(set(self.drugs))
+        #self.drugs=[]
 
     def extract_entities(self, tokens):
         entities = []
