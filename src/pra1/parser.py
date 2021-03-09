@@ -17,7 +17,7 @@ class Utils(object):
             lines = f.readlines()
             ngrams_drugs = []
             counts = []
-            for i, line in enumerate(lines[:1000]):
+            for i, line in enumerate(lines[:10000]):
 
                 text, type = line.strip().lower().split('|')
                 if type == 'drug':  # Solo miramos si es tipo drug
@@ -79,6 +79,7 @@ class Utils(object):
             for indx in indx_max_ngrams[:300]:
                 drugs_ngrams.append(ngrams_drugs[indx])
         return drugs_ngrams
+
     def drug_suffix(self, path):
         drugs_ngrams: List[Union[Union[str, List[Union[str, Any]]], Any]] = []
         # Guardar los ngrams mas comunes que se corresponden a drugs
@@ -96,17 +97,45 @@ class Utils(object):
                             drugs_ngrams.append(token)
 
         return drugs_ngrams
+
+    def brand_names(self, path):
+        brandnames = []
+        # Guardar los ngrams mas comunes que se corresponden a drugs
+        with open(path) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                text = line.strip().lower()
+                brandnames.append(text)
+
+        return brandnames
+
+
+    def group_names(self, path):
+        groupnames = []
+        # Guardar los ngrams mas comunes que se corresponden a drugs
+        with open(path) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                line_list = line.split(':')
+                text = line_list[0].strip().lower()
+                groupnames.append(text)
+
+        return groupnames
+
+
 utils = Utils()
 
 
 class Parser(object):
-    def __init__(self, path, out_path):
+    def __init__(self, path, out_path, resources_paths):
         self.path = path
         self.tokenizer = tokenizer()
         self.out_path = out_path
-        self.drugs = utils.ngrams_DrugBank('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\DrugBank.txt')
-        self.drugs += utils.ngrams_HSDB('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\HSDB.txt')
-        self.drugs += utils.drug_suffix('E:\\UNI\\MASTER 1\\AHLT\\Session1\\Code\\resources\\drugSuffix.txt')
+        self.brands = utils.brand_names(resources_paths.brandnames)
+        self.groups = utils.group_names(resources_paths.groupnames)
+        #self.drugs = utils.ngrams_DrugBank(resources_paths.drugbank)
+        #self.drugs += utils.ngrams_HSDB(resources_paths.hsdb)
+        self.drugs = utils.drug_suffix(resources_paths.drugsuffix)
         self.drugs = list(set(self.drugs))
         #self.drugs=[]
 
@@ -114,14 +143,38 @@ class Parser(object):
         entities = []
         for token in tokens:
             ngram, start, end = token
+            ngram_lower = ngram.lower()
             # TODO: Rule-based model: buscar mas reglas
-            for drug in self.drugs:
-                if drug in ngram:
+            classified = False
+            for group in self.groups:
+                if ((ngram_lower in group) or (group in ngram_lower)) and len(ngram_lower) > 5:
+                    classified = True
                     entities.append({
                         "offset": f"{start}-{end}",
                         "text": ngram,
-                        "type": "drug"
+                        "type": "group"
                     })
+
+            if not classified:
+                for drug in self.drugs:
+                    if drug in ngram_lower:
+                        classified = True
+                        entities.append({
+                            "offset": f"{start}-{end}",
+                            "text": ngram,
+                            "type": "drug"
+                        })
+
+            if not classified:
+                for brand in self.brands:
+                    if ((ngram_lower in brand) or (brand in ngram_lower)) and len(ngram_lower) > 5:
+                        classified = True
+                        entities.append({
+                            "offset": f"{start}-{end}",
+                            "text": ngram,
+                            "type": "brand"
+                        })
+
         return entities
 
     def parse_dir(self):
@@ -133,6 +186,14 @@ class Parser(object):
                     sid = s.attributes["id"].value
                     stext = s.attributes["text"].value
 
+                    gold = []
+                    entities = s.getElementsByTagName("entity")
+                    for e in entities:
+                        offset = e.attributes["charOffset"].value
+                        (start, end) = offset.split(";")[0].split("-")
+
+                        gold.append((int(start), int(end), e.attributes["type"].value, e.attributes["text"].value))
+
                     # Tokenizamos por palabras ngrams=1
                     tokens = self.tokenizer.tokenize(stext, ngrams=1)
 
@@ -142,67 +203,5 @@ class Parser(object):
                     for e in entities:
                         print(sid + "|" + e["offset"] + "|" + e["text"] + "|" + e["type"], file=outfile)
 
-    def path_features(self, output_file):
-        with open(output_file, 'w') as outfile:
-            # Process each file in directory
-            for f in os.listdir(self.path):
-                tree = parse(f"{self.path}/{f}")
-                sentences = tree.getElementsByTagName("sentence")
-                for s in sentences:
-                    sid = s.attributes["id"].value
-                    stext = s.attributes["text"].value
-
-                    gold = []
-                    entities = s.getElementsByTagName("entity")
-                    for e in entities:
-                        offset = e.attributes["charOffset"].value
-                        (start, end) = offset.split(";")[0].split("-")
-                        gold.append((int(start), int(end), e.attributes["type"].value))
-
-                    tokens = self.tokenizer.tokenize(stext, ngrams=1)
-                    features = self.feature_extractor.extract_features(tokens)
-
-                    for i in range(0, len(tokens)):
-                        tag = self.get_tag(tokens[i], gold)
-                        print(sid, tokens[i][0], tokens[i][1], tokens[i][2], tag, "\t".join(features[i]), sep='\t', file=outfile)
-
-                    print(file=outfile)
-
-    def evaluate(self):
-        evaluator.evaluate("NER", 'data/devel', self.out_path)
-
-
-class Parser2(object):
-    def __init__(self, path, out_path):
-        self.path = path
-        self.tokenizer = tokenizer()
-        self.out_path = out_path
-        self.feature_extractor = FeatureExtractor()
-        print('a')
-
-    def path_features(self, output_file):
-        with open(output_file, 'w') as outfile:
-            # Process each file in directory
-            for f in os.listdir(self.path):
-                tree = parse(f"{self.path}/{f}")
-                sentences = tree.getElementsByTagName("sentence")
-                for s in sentences:
-                    sid = s.attributes["id"].value
-                    stext = s.attributes["text"].value
-
-                    gold = []
-                    entities = s.getElementsByTagName("entity")
-                    for e in entities:
-                        offset = e.attributes["charOffset"].value
-                        (start, end) = offset.split(";")[0].split("-")
-                        gold.append((int(start), int(end), e.attributes["type"].value))
-
-                    tokens = self.tokenizer.tokenize(stext, ngrams=1)
-                    features = self.feature_extractor.extract_features(tokens)
-
-                    for i in range(0, len(tokens)):
-                        tag = self.get_tag(tokens[i], gold)
-                        print(sid, tokens[i][0], tokens[i][1], tokens[i][2], tag, "\t".join(features[i]), sep='\t', file=outfile)
-
-                    print(file=outfile)
-
+    def evaluate(self, path):
+        evaluator.evaluate("NER", path, self.out_path)

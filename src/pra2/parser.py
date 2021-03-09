@@ -33,7 +33,7 @@ class Parser(object):
                     features = self.feature_extractor.extract_features(tokens)
 
                     for i in range(0, len(tokens)):
-                        tag = self.get_tag(tokens[i], gold)
+                        tag = self.feature_extractor.get_tag(tokens[i], gold)
                         print(sid, tokens[i][0], tokens[i][1], tokens[i][2], tag, "\t".join(features[i]), sep='\t', file=outfile)
 
                     print(file=outfile)

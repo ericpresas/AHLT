@@ -1,8 +1,14 @@
 from src.pra2 import Parser
+import platform
+from config import config_file
+
+resources_section = f"Resources-{platform.system()}"
+resources_config = config_file.get(resources_section)
+data_config = config_file.get(f"PRA2-Data-{platform.system()}")
 
 if __name__ == "__main__":
-    path = "data/devel/"
-    out_path = "out/pra2/result.out"
+    out_path = f"{data_config.output}result.out"
 
-    parser = Parser(path=path, out_path=out_path)
-    parser.path_features('out/pra2/features.data')
+    parser = Parser(path=data_config.devel, out_path=out_path)
+    parser.path_features(f"{data_config.output}features.data")
+    print('a')

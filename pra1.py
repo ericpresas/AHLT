@@ -1,10 +1,15 @@
 from src.pra1 import Parser
+import platform
+from config import config_file
+
+resources_section = f"Resources-{platform.system()}"
+resources_config = config_file.get(resources_section)
+data_config = config_file.get(f"PRA1-Data-{platform.system()}")
 
 if __name__ == "__main__":
-    path = "data/devel/"
-    out_path = "out/pra1/result.out"
+    out_path = f"{data_config.output}result.out"
 
-    parser = Parser(path=path, out_path=out_path)
+    parser = Parser(path=data_config.train, out_path=out_path, resources_paths=resources_config)
     parser.parse_dir()
-    parser.evaluate()
+    parser.evaluate(path=data_config.train)
     print('a')
