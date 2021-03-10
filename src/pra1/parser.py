@@ -133,8 +133,8 @@ class Parser(object):
         self.out_path = out_path
         self.brands = utils.brand_names(resources_paths.brandnames)
         self.groups = utils.group_names(resources_paths.groupnames)
-        #self.drugs = utils.ngrams_DrugBank(resources_paths.drugbank)
-        #self.drugs += utils.ngrams_HSDB(resources_paths.hsdb)
+        self.drugs = utils.ngrams_DrugBank(resources_paths.drugbank)
+        self.drugs += utils.ngrams_HSDB(resources_paths.hsdb)
         self.drugs = utils.drug_suffix(resources_paths.drugsuffix)
         self.drugs = list(set(self.drugs))
         #self.drugs=[]

@@ -35,5 +35,20 @@ class FeatureExtractor(object):
         return features
 
     def get_tag(self, token, gold):
-        return ''
+        text, start, end = token
+        pos = None
+        type_pos = None
+        for entity in gold:
+            entity_start, entity_end, type = entity
+            if start >=entity_start and start<=entity_end:
+                pos = 'B' if entity_start==start else 'I'
+                type_pos = type
+        if pos is None:
+            pos = 'O'
+
+        if type_pos is None:
+            result = 'O'
+        else:
+            result = f"{pos}-{type_pos}"
+        return result
 
