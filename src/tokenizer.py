@@ -13,18 +13,17 @@ class tokenizer(object):
         return [sep.join(words[i:i + n]) for i in range(len(words) - n + 1)]
 
     def tokenize(self, stext, ngrams):
-        stext_lower = stext.lower()
-        words = self.word_tokenizer(stext.lower())
-        tokenized_scentence = []
+        words = self.word_tokenizer(stext)
+        tokenized_sentence = []
         for i in range(ngrams):
             ngrams = self.words_to_ngrams(words, i+1)
             offset = 0
             for word in ngrams:
-                crop_text = stext_lower[offset:]
+                crop_text = stext[offset:]
                 start_indx = crop_text.find(word) + offset
                 end_indx = start_indx + len(word) - 1
 
-                tokenized_scentence.append((word, start_indx, end_indx))
+                tokenized_sentence.append((word, start_indx, end_indx))
                 offset = end_indx + 1
 
-        return tokenized_scentence
+        return tokenized_sentence
