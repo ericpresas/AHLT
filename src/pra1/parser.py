@@ -3,6 +3,7 @@ from typing import List, Any, Union
 from xml.dom.minidom import parse, parseString
 from ..tokenizer import tokenizer
 from eval import evaluator
+from difflib import SequenceMatcher
 
 
 class Utils(object):
@@ -109,7 +110,7 @@ class Utils(object):
 
         return brandnames
 
-
+    #https: // www.duffysrehab.com / resources / articles / schedule - of - drugs /
     def group_names(self, path):
         groupnames = []
         # Guardar los ngrams mas comunes que se corresponden a drugs
@@ -122,6 +123,35 @@ class Utils(object):
 
         return groupnames
 
+    def group_names_v2(self, path):
+        groupnames = []
+        # Guardar los ngrams mas comunes que se corresponden a drugs
+        with open(path) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                text = line.lower()
+                groupnames.append(text)
+
+        return groupnames
+
+    @staticmethod
+    def similar(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
+    @staticmethod
+    def hasNumbers(inputString):
+        return any(char.isdigit() for char in inputString)
+
+    def hasSpecialChars(self, inputString):
+        return any(char in self.special_chars for char in inputString)
+
+    @staticmethod
+    def hasLetters(inputString):
+        return any(c.isalpha() for c in inputString)
+
+    @staticmethod
+    def countCapitalized(inputString):
+        return sum(1 for c in inputString if c.isupper())
 
 utils = Utils()
 
@@ -133,8 +163,9 @@ class Parser(object):
         self.out_path = out_path
         self.brands = utils.brand_names(resources_paths.brandnames)
         self.groups = utils.group_names(resources_paths.groupnames)
-        self.drugs = utils.ngrams_DrugBank(resources_paths.drugbank)
-        self.drugs += utils.ngrams_HSDB(resources_paths.hsdb)
+        self.groups += utils.group_names_v2(resources_paths.groupnamesv2)
+        #self.drugs = utils.ngrams_DrugBank(resources_paths.drugbank)
+        #self.drugs += utils.ngrams_HSDB(resources_paths.hsdb)
         self.drugs = utils.drug_suffix(resources_paths.drugsuffix)
         self.drugs = list(set(self.drugs))
         #self.drugs=[]
@@ -144,16 +175,33 @@ class Parser(object):
         for token in tokens:
             ngram, start, end = token
             ngram_lower = ngram.lower()
-            # TODO: Rule-based model: buscar mas reglas
+
             classified = False
-            for group in self.groups:
-                if ((ngram_lower in group) or (group in ngram_lower)) and len(ngram_lower) > 5:
-                    classified = True
-                    entities.append({
-                        "offset": f"{start}-{end}",
-                        "text": ngram,
-                        "type": "group"
-                    })
+            if utils.countCapitalized(ngram) >= 3 and utils.countCapitalized(ngram) <= 4:
+                classified = True
+                entities.append({
+                    "offset": f"{start}-{end}",
+                    "text": ngram,
+                    "type": "drug_n"
+                })
+
+            if utils.hasNumbers(ngram) and utils.hasSpecialChars(ngram) and len(ngram) > 5 and utils.hasLetters(ngram):
+                classified = True
+                entities.append({
+                    "offset": f"{start}-{end}",
+                    "text": ngram,
+                    "type": "drug_n"
+                })
+
+            if not classified:
+                for group in self.groups:
+                    if ((ngram_lower in group) or (group in ngram_lower)) and len(ngram_lower) > 5:
+                        classified = True
+                        entities.append({
+                            "offset": f"{start}-{end}",
+                            "text": ngram,
+                            "type": "group"
+                        })
 
             if not classified:
                 for drug in self.drugs:
@@ -167,7 +215,7 @@ class Parser(object):
 
             if not classified:
                 for brand in self.brands:
-                    if ((ngram_lower in brand) or (brand in ngram_lower)) and len(ngram_lower) > 5:
+                    if (((brand in ngram_lower)) and len(ngram_lower) > 5):
                         classified = True
                         entities.append({
                             "offset": f"{start}-{end}",
@@ -179,20 +227,13 @@ class Parser(object):
 
     def parse_dir(self):
         with open(self.out_path, 'w') as outfile:
-            for f in os.listdir(self.path):
+            for i, f in enumerate(os.listdir(self.path)):
+                #print(f"File {i+1}/{len(os.listdir(self.path))}")
                 tree = parse(f"{self.path}/{f}")
                 sentences = tree.getElementsByTagName("sentence")
                 for s in sentences:
                     sid = s.attributes["id"].value
                     stext = s.attributes["text"].value
-
-                    gold = []
-                    entities = s.getElementsByTagName("entity")
-                    for e in entities:
-                        offset = e.attributes["charOffset"].value
-                        (start, end) = offset.split(";")[0].split("-")
-
-                        gold.append((int(start), int(end), e.attributes["type"].value, e.attributes["text"].value))
 
                     # Tokenizamos por palabras ngrams=1
                     tokens = self.tokenizer.tokenize(stext, ngrams=1)
