@@ -1,4 +1,5 @@
 from src.pra2 import Parser
+from src.pra2 import Learner
 import platform
 from config import config_file
 
@@ -18,5 +19,5 @@ if __name__ == "__main__":
 
     parser = Parser(path=data_config.devel, out_path=out_path)
     parser.path_features(f"{data_config.output}features.data")
-    print('a')
-
+    learner = Learner(f"{data_config.output}training_data.crfsuite")
+    learner.learn(f"{data_config.output}features.data")
