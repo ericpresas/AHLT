@@ -6,18 +6,23 @@ from .feature_extractor import FeatureExtractor
 from .learner import Learner
 import pycrfsuite
 
+
 class Parser(object):
-    def __init__(self, path, out_path):
-        self.path = path
+    def __init__(self, data_paths, out_path):
+        self.path_train = data_paths.train
+        self.path_test = data_paths.test
         self.tokenizer = tokenizer()
         self.out_path = out_path
         self.feature_extractor = FeatureExtractor()
 
-    def path_features(self, output_file):
+    def path_features(self, output_file, test=True):
+        path = self.path_train
+        if test:
+            path = self.path_test
         with open(output_file, 'w') as outfile:
             # Process each file in directory
-            for f in os.listdir(self.path):
-                tree = parse(f"{self.path}/{f}")
+            for f in os.listdir(path):
+                tree = parse(f"{path}/{f}")
                 sentences = tree.getElementsByTagName("sentence")
 
                 for s in sentences:
@@ -37,6 +42,12 @@ class Parser(object):
                         print(sid, tokens[i][0], tokens[i][1], tokens[i][2], tag, "\t".join(features[i]), sep='\t', file=outfile)
 
                     print(file=outfile)
+
+    def evaluate(self, path):
+        evaluator.evaluate("NER", path, self.out_path)
+
+
+
 
 
 
