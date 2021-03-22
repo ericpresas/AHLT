@@ -20,7 +20,7 @@ if __name__ == "__main__":
         parser.path_features(output_file=f"{data_config.output}features_train.data", test=False)
         parser.path_features(output_file=f"{data_config.output}features_test.data", test=True)
 
-    estimate_params = True
+    estimate_params = False
 
     # Para usar el estimador downgrade scikit : pip install -U 'scikit-learn<0.24'
     if estimate_params:
@@ -31,8 +31,8 @@ if __name__ == "__main__":
     else:
 
         best_params = {
-            "c1": 1.0,
-            "c2": 1e-3
+            "c1": 0.14,
+            "c2": 0.32
         }
 
     # Train the model

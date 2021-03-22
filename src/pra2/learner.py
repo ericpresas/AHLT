@@ -101,16 +101,6 @@ class Learner(object):
 
         return rs.best_params_
 
-
-    def evaluate(self, features_path):
-        #tags, features, _ = self.read_features(features_path=features_path, dict_=True)
-        pass
-
-
-
-
-
-
     def predict(self, features_path, out_path):
         tags, features, ids = self.read_features(features_path=features_path)
         tagger = pycrfsuite.Tagger()
@@ -137,7 +127,7 @@ class Learner(object):
                         if tmp_class != '':
                             classified_data.append((id_list[j][0], start_index, end_index, text_class, tmp_class))
                             #print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}")
-                            #print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}", file=outfile)
+                            print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}", file=outfile)
                         start_index = 0
                         end_index = 0
                         tmp_class = ''
