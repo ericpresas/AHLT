@@ -13,17 +13,32 @@ if __name__ == "__main__":
     parser = Parser(data_paths=data_config, out_path=out_path)
     learner = Learner(out_path=f"{data_config.output}training_data.crfsuite")
 
-    train = False
+    extract_features = True
 
-    if train:
+    if extract_features:
         # Get Train and test features
         parser.path_features(output_file=f"{data_config.output}features_train.data", test=False)
         parser.path_features(output_file=f"{data_config.output}features_test.data", test=True)
 
-        # Train the model
-        learner.learn(features_path=f"{data_config.output}features_train.data")
+    estimate_params = True
 
-    predict = False
+    # Para usar el estimador downgrade scikit : pip install -U 'scikit-learn<0.24'
+    if estimate_params:
+
+        labels = ['B-drug', 'I-drug', 'B-drug_n', 'I-drug_n', 'B-group', 'I-group', 'B-brand', 'I-brand']
+        best_params = learner.estimate_best_params(features_path=f"{data_config.output}features_train.data", labels=labels)
+
+    else:
+
+        best_params = {
+            "c1": 1.0,
+            "c2": 1e-3
+        }
+
+    # Train the model
+    learner.learn(features_path=f"{data_config.output}features_train.data", params=best_params)
+
+    predict = True
 
     if predict:
         # Classify with test data

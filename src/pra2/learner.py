@@ -1,7 +1,14 @@
-from itertools import chain
-import nltk
 import sklearn
 import pycrfsuite
+from sklearn.model_selection import GridSearchCV
+import sklearn_crfsuite
+from sklearn.metrics import classification_report
+from sklearn_crfsuite import metrics
+import numpy as np
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RandomizedSearchCV
+import scipy.stats
 
 
 class Learner(object):
@@ -9,7 +16,10 @@ class Learner(object):
         self.out_path = out_path
 
     @staticmethod
-    def read_features(features_path):
+    def features2dict(features):
+        return {feature.split('=')[0]: feature.split('=')[1] for feature in features}
+
+    def read_features(self, features_path, dict_=False):
         all_tags = []
         features = []
         all_ids = []
@@ -24,10 +34,15 @@ class Learner(object):
                 if len(text) > 0:
 
                     tags.append(text[4])
-                    form, suf4, next, prev = text[-4:]
-                    token_features.append([form, suf4, next, prev])
+
+                    form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, next, next_lower, prev, prev_lower = text[-10:]
                     ids.append((text[0], text[1], text[2], text[3]))
-                    print(text)
+
+                    if dict_:
+                        token_features.append(self.features2dict(text[-10:]))
+                    else:
+                        token_features.append([form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, next, next_lower, prev, prev_lower])
+                    #print(text)
                 else:
                     features.append(token_features)
                     token_features = []
@@ -38,20 +53,63 @@ class Learner(object):
 
         return all_tags, features, all_ids
 
-    def learn(self, features_path):
+    def learn(self, features_path, params={"c1": 1.0, "c2": 1e-3}):
         tags, features, _ = self.read_features(features_path=features_path)
         trainer = pycrfsuite.Trainer(verbose=False)
         for xseq, yseq in zip(features, tags):
             trainer.append(xseq, yseq)
         trainer.set_params({
-            'c1': 1.0,  # coefficient for L1 penalty
-            'c2': 1e-3,  # coefficient for L2 penalty
-            'max_iterations': 50,  # stop earlier
+            'c1': params['c1'],  # coefficient for L1 penalty
+            'c2': params['c2'],  # coefficient for L2 penalty
+            'max_iterations': 100,  # stop earlier
 
             # include transitions that are possible, but not observed
             'feature.possible_transitions': True
         })
         trainer.train(self.out_path)
+
+    def estimate_best_params(self, features_path, labels):
+        #https://sklearn-crfsuite.readthedocs.io/en/latest/tutorial.html#hyperparameter-optimization
+        tags, features, _ = self.read_features(features_path=features_path, dict_=True)
+        crf = sklearn_crfsuite.CRF(
+            max_iterations=100,
+            all_possible_transitions=True
+        )
+        params_space = {
+            'c1': scipy.stats.expon(scale=0.5),
+            'c2': scipy.stats.expon(scale=0.05),
+            'algorithm': ['lbfgs']
+        }
+
+        # use the same metric for evaluation
+        f1_scorer = make_scorer(metrics.flat_f1_score,
+                                average='weighted', labels=labels)
+
+        # search
+        rs = RandomizedSearchCV(crf, params_space,
+                                cv=3,
+                                verbose=1,
+                                n_jobs=-1,
+                                n_iter=50,
+                                scoring=f1_scorer)
+        rs.fit(features, tags)
+
+        # crf = rs.best_estimator_
+        print('best params:', rs.best_params_)
+        print('best CV score:', rs.best_score_)
+        print('model size: {:0.2f}M'.format(rs.best_estimator_.size_ / 1000000))
+
+        return rs.best_params_
+
+
+    def evaluate(self, features_path):
+        #tags, features, _ = self.read_features(features_path=features_path, dict_=True)
+        pass
+
+
+
+
+
 
     def predict(self, features_path, out_path):
         tags, features, ids = self.read_features(features_path=features_path)
@@ -78,8 +136,8 @@ class Learner(object):
                     else:
                         if tmp_class != '':
                             classified_data.append((id_list[j][0], start_index, end_index, text_class, tmp_class))
-                            print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}")
-                            print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}", file=outfile)
+                            #print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}")
+                            #print(f"{id_list[j][0]}|{start_index}-{end_index}|{text_class}|{tmp_class}", file=outfile)
                         start_index = 0
                         end_index = 0
                         tmp_class = ''

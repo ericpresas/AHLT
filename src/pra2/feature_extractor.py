@@ -26,9 +26,15 @@ class FeatureExtractor(object):
 
             token_features = [
                 f"form={ngram}",
+                f"form-lower={ngram.lower()}",
+                f"form-isupper={ngram.isupper()}",
+                f"form-istitle={ngram.istitle()}",
+                f"form-isdigit={ngram.isdigit()}",
                 f"suf4={suf4}",
                 f"next={next_ngram}",
-                f"prev={prev_ngram}"
+                f"next-lower={next_ngram.lower()}",
+                f"prev={prev_ngram}",
+                f"prev-lower={prev_ngram.lower()}"
             ]
             features.append(token_features)
 

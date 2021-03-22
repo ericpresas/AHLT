@@ -9,7 +9,7 @@ data_config = config_file.get(f"PRA1-Data-{platform.system()}")
 if __name__ == "__main__":
     out_path = f"{data_config.output}result.out"
 
-    parser = Parser(path=data_config.devel, out_path=out_path, resources_paths=resources_config)
+    parser = Parser(path=data_config.test, out_path=out_path, resources_paths=resources_config)
     parser.parse_dir()
-    parser.evaluate(path=data_config.devel)
+    parser.evaluate(path=data_config.test)
     print('a')
