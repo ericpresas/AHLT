@@ -65,7 +65,8 @@ class Learner(object):
 
             # include transitions that are possible, but not observed
             'feature.possible_transitions': True,
-            'linesearch': params['linesearch']
+            'linesearch': params['linesearch'],
+            'delta': params['delta']
         })
         trainer.train(self.out_path)
 
@@ -79,6 +80,7 @@ class Learner(object):
         params_space = {
             'c1': scipy.stats.expon(scale=0.5),
             'c2': scipy.stats.expon(scale=0.05),
+            'delta': scipy.stats.expon(scale=0.0001),
             'algorithm': ['lbfgs'],
             'linesearch': ['MoreThuente', 'Backtracking', 'StrongBacktracking']
         }

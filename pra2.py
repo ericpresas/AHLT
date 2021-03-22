@@ -30,11 +30,7 @@ if __name__ == "__main__":
 
     else:
 
-        best_params = {
-            "c1": 0.025,
-            "c2": 0.06,
-            "linesearch": 'MoreThuente'
-        }
+        best_params = {'algorithm': 'lbfgs', 'c1': 0.00394884905617865, 'c2': 0.10734123931366764, 'delta': 7.507345527782286e-06, 'linesearch': 'StrongBacktracking'}
 
     # Train the model
     learner.learn(features_path=f"{data_config.output}features_train.data", params=best_params)
