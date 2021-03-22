@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser = Parser(data_paths=data_config, out_path=out_path)
     learner = Learner(out_path=f"{data_config.output}training_data.crfsuite")
 
-    extract_features = True
+    extract_features = False
 
     if extract_features:
         # Get Train and test features
@@ -31,8 +31,9 @@ if __name__ == "__main__":
     else:
 
         best_params = {
-            "c1": 0.14,
-            "c2": 0.32
+            "c1": 0.025,
+            "c2": 0.06,
+            "linesearch": 'MoreThuente'
         }
 
     # Train the model

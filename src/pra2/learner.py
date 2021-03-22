@@ -64,7 +64,8 @@ class Learner(object):
             'max_iterations': 100,  # stop earlier
 
             # include transitions that are possible, but not observed
-            'feature.possible_transitions': True
+            'feature.possible_transitions': True,
+            'linesearch': params['linesearch']
         })
         trainer.train(self.out_path)
 
@@ -78,7 +79,8 @@ class Learner(object):
         params_space = {
             'c1': scipy.stats.expon(scale=0.5),
             'c2': scipy.stats.expon(scale=0.05),
-            'algorithm': ['lbfgs']
+            'algorithm': ['lbfgs'],
+            'linesearch': ['MoreThuente', 'Backtracking', 'StrongBacktracking']
         }
 
         # use the same metric for evaluation
