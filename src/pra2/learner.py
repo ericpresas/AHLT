@@ -12,8 +12,8 @@ import scipy.stats
 
 
 class Learner(object):
-    def __init__(self, out_path):
-        self.out_path = out_path
+    def __init__(self):
+        pass
 
     @staticmethod
     def features2dict(features):
@@ -35,13 +35,13 @@ class Learner(object):
 
                     tags.append(text[4])
 
-                    form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, next, next_lower, prev, prev_lower = text[-10:]
+                    form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, suf3, suf2, pref4, pref3, pref2, next, next_lower, prev, prev_lower, drug, group, brand, drug_n = text[-19:]
                     ids.append((text[0], text[1], text[2], text[3]))
 
                     if dict_:
-                        token_features.append(self.features2dict(text[-10:]))
+                        token_features.append(self.features2dict(text[-19:]))
                     else:
-                        token_features.append([form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, next, next_lower, prev, prev_lower])
+                        token_features.append([form, form_lower, form_isupper, form_istitle, form_isdigit, suf4, suf3, suf2, pref4, pref3, pref2, next, next_lower, prev, prev_lower, drug, group, brand, drug_n])
                     #print(text)
                 else:
                     features.append(token_features)
@@ -53,7 +53,7 @@ class Learner(object):
 
         return all_tags, features, all_ids
 
-    def learn(self, features_path, params={"c1": 1.0, "c2": 1e-3}):
+    def learn(self, features_path, out_path, params={"c1": 1.0, "c2": 1e-3}):
         tags, features, _ = self.read_features(features_path=features_path)
         trainer = pycrfsuite.Trainer(verbose=False)
         for xseq, yseq in zip(features, tags):
@@ -68,7 +68,7 @@ class Learner(object):
             'linesearch': params['linesearch'],
             'delta': params['delta']
         })
-        trainer.train(self.out_path)
+        trainer.train(out_path)
 
     def estimate_best_params(self, features_path, labels):
         #https://sklearn-crfsuite.readthedocs.io/en/latest/tutorial.html#hyperparameter-optimization
@@ -105,14 +105,15 @@ class Learner(object):
 
         return rs.best_params_
 
-    def predict(self, features_path, out_path):
+    def predict(self, features_path, model, out_path):
         tags, features, ids = self.read_features(features_path=features_path)
         tagger = pycrfsuite.Tagger()
-        tagger.open(self.out_path)
+        tagger.open(model)
         classified_data = []
         with open(out_path, 'w') as outfile:
             for feat_list, tag_list, id_list in zip(features, tags, ids):
                 preds = tagger.tag(feat_list)
+                #prob = tagger.marginal(preds[0], 0)
                 start_index = 0
                 end_index = 0
                 tmp_class = ''

@@ -10,12 +10,13 @@ data_config = config_file.get(f"PRA2-Data-{platform.system()}")
 if __name__ == "__main__":
     out_path = f"{data_config.output}result.out"
 
-    parser = Parser(data_paths=data_config, out_path=out_path)
-    learner = Learner(out_path=f"{data_config.output}training_data.crfsuite")
+    parser = Parser(data_paths=data_config, resources_paths=resources_config, out_path=out_path)
+    learner = Learner()
 
     extract_features = False
 
     if extract_features:
+        print('Extract features')
         # Get Train and test features
         parser.path_features(output_file=f"{data_config.output}features_train.data", test=False)
         parser.path_features(output_file=f"{data_config.output}features_test.data", test=True)
@@ -31,14 +32,16 @@ if __name__ == "__main__":
     else:
 
         best_params = {'algorithm': 'lbfgs', 'c1': 0.00394884905617865, 'c2': 0.10734123931366764, 'delta': 7.507345527782286e-06, 'linesearch': 'StrongBacktracking'}
+        #best_params = {'algorithm': 'lbfgs', 'c1': 0.26698808800350887, 'c2': 0.0035781435343593634, 'delta': 8.630770732257361e-05, 'linesearch': 'Backtracking'}
 
+    print('Train')
     # Train the model
-    learner.learn(features_path=f"{data_config.output}features_train.data", params=best_params)
+    learner.learn(features_path=f"{data_config.output}features_train.data", out_path=f"{data_config.output}model.crfsuite", params=best_params)
 
     predict = True
 
     if predict:
         # Classify with test data
-        learner.predict(features_path=f"{data_config.output}features_test.data", out_path=f"{data_config.output}result.out")
+        learner.predict(features_path=f"{data_config.output}features_test.data", model=f"{data_config.output}model.crfsuite", out_path=f"{data_config.output}result.out")
 
     parser.evaluate(path=data_config.test)
