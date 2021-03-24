@@ -31,7 +31,7 @@ class FeatureExtractor(object):
     def similar(a, b):
         return SequenceMatcher(None, a, b).ratio()
 
-    def get_similarities(self, ngram):
+    def get_aditional_resorces(self, ngram):
         categories = ['drug', 'brand', 'group', 'drug_n']
         similarities = {}
         for category in categories:
@@ -47,15 +47,18 @@ class FeatureExtractor(object):
 
     def extract_features(self, tokens, stext):
         features = []
-        #sentiment = self.sentiment_scores(stext)
         for i, token in enumerate(tokens):
             ngram, start, end = token
             form = ngram
-            similarities = self.get_similarities(ngram)
-            drug_counts = similarities['drug']
-            group_counts = similarities['group']
-            brand_counts = similarities['brand']
-            drug_n_counts = similarities['drug_n']
+
+            # Gets if the ngram is present for each category (binary)
+            resources = self.get_aditional_resorces(ngram)
+            drug_counts = resources['drug']
+            group_counts = resources['group']
+            brand_counts = resources['brand']
+            drug_n_counts = resources['drug_n']
+
+            # Extract different prefixes and suffixes from the ngram
             suf4 = ngram[-4:] if len(ngram) >= 4 else ngram
             suf3 = ngram[-3:] if len(ngram) >= 3 else ngram
             suf2 = ngram[-2:] if len(ngram) >= 2 else ngram
@@ -65,23 +68,28 @@ class FeatureExtractor(object):
             prev_index = i - 1
             next_index = i + 1
             prev_ngram = ''
+
+            # Extracts the previous word (if it's a special character will take the previous from previous)
             if prev_index >= 0:
                 prev_ngram, _, _ = tokens[prev_index]
                 if prev_ngram in self.special_chars:
                     if prev_index - 1 >= 0:
                         prev_ngram, _, _ = tokens[prev_index - 1]
-            else:
+            else:  # Beggining of the sentence if there is no previous words
                 prev_ngram = '_BoS_'
 
             next_ngram = ''
+
+            # Extracts the next word (if it's a special character will take the next from next)
             if next_index < (len(tokens) - 1):
                 next_ngram, _, _ = tokens[next_index]
                 if next_ngram in self.special_chars:
                     if next_index + 1 < (len(tokens) - 1):
                         next_ngram, _, _ = tokens[next_index + 1]
-            else:
+            else:  # End of the sentence if there is no next words
                 next_ngram = '_EoS_'
 
+            # Building the feature vector
             token_features = [
                 f"form={ngram}",
                 f"form-lower={ngram.lower()}",

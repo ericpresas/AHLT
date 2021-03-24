@@ -12,14 +12,18 @@ class Parser(object):
     def __init__(self, data_paths, resources_paths, out_path):
         self.path_train = data_paths.train
         self.path_test = data_paths.test
+        self.path_devel = data_paths.devel
         self.tokenizer = tokenizer()
         self.out_path = out_path
         self.feature_extractor = FeatureExtractor(utils=Utils(drugbank_path=resources_paths.drugbank, hsdb_path=resources_paths.hsdb))
 
-    def path_features(self, output_file, test=True):
+    def path_features(self, output_file, type_='train'):
         path = self.path_train
-        if test:
+        if type_ == 'test':
             path = self.path_test
+        elif type_ == 'devel':
+            path = self.path_devel
+
         with open(f"{output_file}", 'w') as outfile:
             # Process each file in directory
             for count, f in enumerate(os.listdir(path)):
