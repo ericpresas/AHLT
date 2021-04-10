@@ -2,6 +2,7 @@ from nltk.tokenize import word_tokenize
 import nltk
 from nltk import ngrams
 nltk.download('punkt')
+from nltk.parse.corenlp import CoreNLPDependencyParser
 
 
 class tokenizer(object):
@@ -27,3 +28,9 @@ class tokenizer(object):
                 offset = end_indx + 1
 
         return tokenized_sentence
+
+    def analyze(self, stext):
+        myparser = CoreNLPDependencyParser(url="http://localhost:9000")
+        mytree, = myparser.raw_parse(stext)
+        #TODO: Add start-end token.
+        pass
