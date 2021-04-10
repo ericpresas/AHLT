@@ -38,7 +38,7 @@ class Parser(object):
 
     def check_interaction(self, analysis, entities, id_e1, id_e2):
         # TODO: check interaction
-        pass
+        return None
 
     def evaluate(self, path):
         evaluator.evaluate("NER", path, self.out_path)
