@@ -41,7 +41,7 @@ class Parser(object):
         return None
 
     def evaluate(self, path):
-        evaluator.evaluate("NER", path, self.out_path)
+        evaluator.evaluate("DDI", path, self.out_path)
 
 
 
