@@ -11,5 +11,5 @@ if __name__ == "__main__":
 
     parser = Parser(path=data_config.train, out_path=out_path)
     parser.path_process()
-    parser.evaluate(path=data_config.test)
+    parser.evaluate(path=data_config.train)
     print('a')

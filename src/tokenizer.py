@@ -36,7 +36,8 @@ class tokenizer(object):
         nodes = mytree.nodes
         offset = 0
         result = {}
-        for key, node in nodes.items():
+        for key in range(len(nodes.keys())):
+            node = nodes[key]
             format_node = {
                 "word": node['word'],
                 "head": node['head'],
