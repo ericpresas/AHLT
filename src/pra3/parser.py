@@ -39,9 +39,9 @@ class Parser(object):
 
                                 if ddi_type_gt == 'effect':
                                     print(ddi_type_gt)
-                                    ddi_type = self.check_interaction(analysis, entities, id_e1, id_e2)
-                                    if ddi_type != None:
-                                        print(sid + "|" + id_e1 + "|" + id_e2 + "|" + ddi_type, file=outfile)
+                            ddi_type = self.check_interaction(analysis, entities, id_e1, id_e2)
+                            if ddi_type != None:
+                                print(sid + "|" + id_e1 + "|" + id_e2 + "|" + ddi_type, file=outfile)
                     except Exception as e:
                         pass
 
