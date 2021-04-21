@@ -37,8 +37,8 @@ class Parser(object):
                             if ddi:
                                 ddi_type_gt = p.attributes['type'].value
 
-                                if ddi_type_gt == 'effect':
-                                    print(ddi_type_gt)
+                                print(ddi_type_gt)
+
                             ddi_type = self.check_interaction(analysis, entities, id_e1, id_e2)
                             if ddi_type != None:
                                 print(sid + "|" + id_e1 + "|" + id_e2 + "|" + ddi_type, file=outfile)
@@ -47,28 +47,50 @@ class Parser(object):
 
     def check_interaction(self, analysis, entities, id_e1, id_e2):
         # TODO: check interaction
-        print(f"Drug1: {entities[id_e1]}")
-        print(f"Drug2: {entities[id_e2]}")
+        #print(f"Drug1: {entities[id_e1]}")
+        #print(f"Drug2: {entities[id_e2]}")
         print_sentence = []
         print_tag = []
         ddi_type = None
+        effect_verbs = set(["administer", "potentiate", "prevent", "stimulate"" stimulated","antagonize","antagonized","reduce","reduced", "increase", "increased","decreased", "enhance", "enhanced"])
+        mechanism_verbs = set(["reduce","reduced", "increase", "increased","decreased", "decrease", "enhance", "enhanced"])
+        int_verbs = set(["interact", "interaction","interactions","interfere"])
+        advise_verbs = set(["advise", "advised", "caution", "Caution", "consideration","considerations","should be"])
         for key, obj in analysis.items():
             if 'start' in obj:
                 if obj['start'] >= int(entities[id_e1][0]) and obj['end'] <= int(entities[id_e2][1]):
                     #print(f"{key} - {obj}")
                     print_sentence.append(obj['word'])
                     print_tag.append(obj['tag'])
-        print(" ".join(print_sentence))
-        print(" ".join(print_tag))
+       # print(" ".join(print_sentence))
+        #print(" ".join(print_tag))
 
-        if 'MD' in print_tag:
-            indx_md = print_tag.index('MD')
-            if print_tag[indx_md + 1] == 'VB':
-                ddi_type = 'effect'
-                print(f"Found {ddi_type}")
+        #if 'MD' in print_tag:
+            #indx_md = print_tag.index('MD')
+            #if print_tag[indx_md + 1] == 'VB':
+             #   ddi_type = 'effect'
+                #print(f"Found {ddi_type}")
 
-        if 'FW' in print_tag:
+        #if 'FW' in print_tag:
+            #ddi_type = 'effect'
+            #print(f'Found {ddi_type}')
+
+        if bool(effect_verbs.intersection(set(print_sentence))):
             ddi_type = 'effect'
+            print(f'Found {ddi_type}')
+        if bool(mechanism_verbs.intersection(set(print_sentence))):
+            ddi_type = 'mechanism'
+            if 'MD' in print_tag:
+                indx_md = print_tag.index('MD')
+                if print_tag[indx_md + 1] == 'VB':
+                    ddi_type = 'effect'
+            print(f'Found {ddi_type}')
+
+        if bool(advise_verbs.intersection(set(print_sentence))):
+            ddi_type = 'advise'
+            print(f'Found {ddi_type}')
+        if bool(int_verbs.intersection(set(print_sentence))):
+            ddi_type = 'int'
             print(f'Found {ddi_type}')
         return ddi_type
 
