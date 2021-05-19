@@ -31,8 +31,10 @@ class tokenizer(object):
         return tokenized_sentence
 
     def analyze(self, stext):
+        from graphviz import Source
         myparser = CoreNLPDependencyParser(url="http://localhost:9000")
         mytree, = myparser.raw_parse(stext)
+        dot = mytree.to_dot()
         nodes = mytree.nodes
         offset = 0
         result = {}
@@ -54,6 +56,16 @@ class tokenizer(object):
                 format_node['start'] = start_indx
                 format_node['end'] = end_indx
 
+                format_node['word'] = node['word'].lower()
+                format_node['lemma'] = node['lemma'].lower()
+
             result[key] = format_node
 
-        return result
+        triples = mytree.triples()
+
+        tree = {
+            "raw": result,
+            "triples": triples,
+            "graph": mytree.nx_graph()
+        }
+        return tree
