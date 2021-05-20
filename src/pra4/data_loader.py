@@ -15,23 +15,17 @@ class DataLoader(object):
                     features = line[4:]
                     vocabulary += features
 
+                vocabulary = Counter(vocabulary).most_common(vocab_size)
+                with open(vocabuary_path, 'w') as outfile:
+                    for feature in vocabulary:
+                        print(feature[0], file=outfile)
+
             self.num_batches = int(len(lines) / self.batch_size)
             all_classes = [line.split('\t')[3] for line in lines]
             all_classes = list(filter(lambda x: x != 'null', all_classes))
             all_classes = sorted(list(set(all_classes)))
 
-        with open('out/pra4/test_features.out', encoding="utf-8") as f:
-            lines = f.readlines()
-            if make_vocab:
-                for line in lines:
-                    line = line.strip().split('\t')
-                    features = line[4:]
-                    vocabulary += features
 
-                vocabulary = Counter(vocabulary).most_common(vocab_size)
-                with open(vocabuary_path, 'w') as outfile:
-                    for feature in vocabulary:
-                        print(feature[0], file=outfile)
 
         self.vocab = self.load_vocabulary(vocabuary_path)
         self.classes_ = all_classes
