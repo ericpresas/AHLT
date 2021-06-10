@@ -9,16 +9,16 @@ resources_config = config_file.get(resources_section)
 data_config = config_file.get(f"PRA6-Data-{platform.system()}")
 
 if __name__ == "__main__":
-    X_train_file = f"{data_config.output}X_train.pkl"
-    X_val_file = f"{data_config.output}X_val.pkl"
-    Y_train_file = f"{data_config.output}Y_train.pkl"
-    Y_val_file = f"{data_config.output}Y_val.pkl"
-    vocab_file = f"{data_config.output}vocab.pkl"
+    X_train_file = f"{data_config.output}X_train_200.pkl"
+    X_val_file = f"{data_config.output}X_val_200.pkl"
+    Y_train_file = f"{data_config.output}Y_train_200.pkl"
+    Y_val_file = f"{data_config.output}Y_val_200.pkl"
+    vocab_file = f"{data_config.output}vocab_200.pkl"
 
     data_loader = DataLoader()
     train_data = data_loader.load_data(data_config.train)
     val_data = data_loader.load_data(data_config.devel)
-    indexes_data = data_loader.create_indexs(train_data, max_length=100)
+    indexes_data = data_loader.create_indexs(train_data, max_length=200)
 
     X_train = data_loader.encode_words(train_data, indexes_data)
     Y_train = data_loader.encode_labels(train_data, indexes_data)

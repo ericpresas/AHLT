@@ -48,7 +48,20 @@ class DataLoader(object):
             '<PAD>': 0,
             '<UNK>': 1
         }
-        count = 2
+
+        lemmas = {
+            '<PAD>': 0,
+            '<UNK>': 1
+        }
+
+        tags = {
+            '<PAD>': 0,
+            '<UNK>': 1
+        }
+
+        count_words = 2
+        count_lemmas = 2
+        count_tags = 2
         for interaction in dataset:
             tokens = interaction[4]
             if len(tokens) > max_length:
@@ -56,43 +69,77 @@ class DataLoader(object):
 
             if len(tokens) > max_length:
                 #print(f"Sentence: {interaction[:4]} - {len(tokens)}")
-                tokens = tokens[:100]
+                tokens = tokens[:max_length]
 
             for token in tokens:
-                if token not in words:
-                    words[token] = count
-                    count += 1
+                if token[0] not in words:
+                    words[token[0]] = count_words
+                    count_words += 1
+
+                if token[1] not in lemmas:
+                    lemmas[token[1]] = count_lemmas
+                    count_lemmas += 1
+
+                if token[2] not in tags:
+                    tags[token[2]] = count_tags
+                    count_tags += 1
 
         return {
             'words': words,
+            'lemmas': lemmas,
+            'tags': tags,
             'labels': labels,
             'maxlen': max_length
         }
 
     def encode_words(self, dataset, indexs):
-        interactions_embeddings = []
+        interactions_embeddings_words = []
+        interactions_embeddings_lemmas = []
+        interactions_embeddings_tags = []
         for interaction in dataset:
             tokens = interaction[4]
             if len(tokens) > indexs['maxlen']:
                 tokens = self.find_between_tags(tokens, start_tag=('<DRUG1>', '<DRUG1>', '<DRUG1>'), end_tag=('<DRUG2>', '<DRUG2>', '<DRUG2>'))
 
             if len(tokens) > indexs['maxlen']:
-                tokens = tokens[:100]
+                tokens = tokens[:indexs['maxlen']]
 
-            interaction_embedding = []
+            interaction_embedding_words = []
+            interaction_embedding_lemmas = []
+            interaction_embedding_tags = []
             for token in tokens:
-                if token in indexs['words']:
-                    interaction_embedding.append(indexs['words'][token])
+                if token[0] in indexs['words']:
+                    interaction_embedding_words.append(indexs['words'][token[0]])
                 else:
-                    interaction_embedding.append(indexs['words']['<UNK>'])
+                    interaction_embedding_words.append(indexs['words']['<UNK>'])
+
+                if token[1] in indexs['lemmas']:
+                    interaction_embedding_lemmas.append(indexs['lemmas'][token[1]])
+                else:
+                    interaction_embedding_lemmas.append(indexs['lemmas']['<UNK>'])
+
+                if token[2] in indexs['tags']:
+                    interaction_embedding_tags.append(indexs['tags'][token[2]])
+                else:
+                    interaction_embedding_tags.append(indexs['tags']['<UNK>'])
 
             if len(tokens) < indexs['maxlen']:
-                additional_padding = [indexs['words']['<PAD>'] for x in range(indexs['maxlen'] - len(tokens))]
-                interaction_embedding += additional_padding
+                additional_padding_words = [indexs['words']['<PAD>'] for x in range(indexs['maxlen'] - len(tokens))]
+                additional_padding_lemmas = [indexs['lemmas']['<PAD>'] for x in range(indexs['maxlen'] - len(tokens))]
+                additional_padding_tags = [indexs['tags']['<PAD>'] for x in range(indexs['maxlen'] - len(tokens))]
+                interaction_embedding_words += additional_padding_words
+                interaction_embedding_lemmas += additional_padding_lemmas
+                interaction_embedding_tags += additional_padding_tags
 
-            interactions_embeddings.append(interaction_embedding)
+            interactions_embeddings_words.append(interaction_embedding_words)
+            interactions_embeddings_lemmas.append(interaction_embedding_lemmas)
+            interactions_embeddings_tags.append(interaction_embedding_tags)
 
-        return interactions_embeddings
+        return {
+            'words': interactions_embeddings_words,
+            'lemmas': interactions_embeddings_lemmas,
+            'tags': interactions_embeddings_tags
+        }
 
     def encode_labels(self, dataset, indexs):
         labels = []

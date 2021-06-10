@@ -17,19 +17,19 @@ if __name__ == "__main__":
     Y_val_file = f"{data_config.output}Y_val.pkl"
     vocab_file = f"{data_config.output}vocab.pkl"
 
-    model_file = f"{data_config.output}model.h5"
+    model_file = f"{data_config.output}model_rcnn_2.h5"
 
     with open(vocab_file, 'rb') as fp:
         vocab = pickle.load(fp)
 
     with open(X_train_file, 'rb') as fp:
-        X_train = np.array(pickle.load(fp))
+        X_train = pickle.load(fp)
 
     with open(Y_train_file, 'rb') as fp:
         Y_train = pickle.load(fp)
 
     with open(X_val_file, 'rb') as fp:
-        X_val = np.array(pickle.load(fp))
+        X_val = pickle.load(fp)
 
     with open(Y_val_file, 'rb') as fp:
         Y_val = pickle.load(fp)
