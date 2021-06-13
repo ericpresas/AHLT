@@ -11,9 +11,9 @@ resources_config = config_file.get(resources_section)
 data_config = config_file.get(f"PRA6-Data-{platform.system()}")
 
 if __name__ == "__main__":
-    vocab_file = f"{data_config.output}vocab.pkl"
+    vocab_file = f"{data_config.output}vocab_200.pkl"
 
-    model_file = f"{data_config.output}model2_100.h5"
+    model_file = f"{data_config.output}best_model_200.h5"
 
     pred_file = f"{data_config.output}predictions.txt"
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     data_loader = DataLoader()
 
-    test_data = data_loader.load_data(data_config.test)
+    test_data = data_loader.load_data(data_config.devel)
 
     X_test = data_loader.encode_words(test_data, vocab)
     X_test['words'] = np.array(X_test['words'])
@@ -34,10 +34,10 @@ if __name__ == "__main__":
     y_test = np.array([label[0] for label in Y_test])
     y_test = to_categorical(y_test)
 
-    learner = Learner(name='rcnn', max_len=100, vocab=vocab)
+    learner = Learner(name='rcnn_splitted', max_len=200, vocab=vocab)
     learner.load_model(model_file)
 
     learner.predict(X_test, test_data, vocab, pred_file)
 
-    learner.evaluate(data_config.test, pred_file)
+    learner.evaluate(data_config.devel, pred_file)
     print('a')
